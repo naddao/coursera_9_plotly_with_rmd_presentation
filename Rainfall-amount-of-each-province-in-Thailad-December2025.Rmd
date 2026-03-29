@@ -1,0 +1,279 @@
+---
+title: "Visualize spatial rainfall of each province in Thailand (December, 2025) "
+caption: using plotly and R Markdown presentation
+author: "Naddao Thongsak"
+date: "`r Sys.Date()`"
+output:
+  ioslides_presentation: default
+  slidy_presentation: default
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, results=TRUE)
+```
+
+# 1. Data sources
+
+## Spatial rainfall data of all provinces of Thailand 
+
+**Source:** Thailand spatial rainfall data is downloaded from website of Open
+Goverment data of Thailand (<https://data.go.th/dataset/spatial-rain>).
+
+**Data description:** Data is described as spatial rainfall of each province in Thailand
+summary for each month since 2018 to 2026. Spatial rainfall is an
+average of rainfall of each interested area (such as province). Spatial rainfall data combine information of
+rainfall data from multiple points station(station that measure amount of
+rainfall) then use algorithm to interpolate data into data that represent rainfall amount for that area.
+
+# 2. Understanding our data
+
+## 2.1 Read spatial rainfall data of Thailand from .csv file.
+
+```{r, echo = TRUE}
+# load spatial rainfall data to memory
+url <- "spatial-rain-hii.csv"
+spt_rainfall_th <- read.csv(url)
+```
+
+View first 6 rows of data.
+
+```{r, echo = TRUE}
+head(spt_rainfall_th)
+```
+
+## 2.2  Overview spatial rainfall data of Thailand (2018-2026)
+
+**Data dimension:** From spatial rainfall data of Thailand 2018-2026,
+data contains 7546 rows and 7 columns.
+
+```{r, echo = TRUE}
+dim(spt_rainfall_th)
+```
+
+**Data period**
+
+```{r, echo = TRUE}
+unique(spt_rainfall_th$YEAR)
+```
+
+## 2.3 Understanding data in each columns (#1)
+
+**data in each column** are the following:
+
+-   YEAR: year that collect data.
+
+-   MONTH: month that collect data
+
+-   PROV_ID: ID of each province in Thailand
+
+-   PROV_T: province name in Thai
+
+## 2.3 Understanding data in each columns (#2)
+
+-   MinRain: Minimum spatial rainfall data of specify province in that month and year.
+
+-   MaxRain: Maximum spatial rainfall data of specify province in that month and year.
+
+-   AvgRain : Average spatial rainfall data of specify province in that month and year.
+
+## 2.4 Understanding data in each row
+
+**Data in each row** is a spatial rainfall data of each province in Thailand of specify month, year. There are 3 measurement rainfall data which are:-
+
+-   AvgRain: Avergage Rainfall(mm)
+
+-   MinRain: Maximum rainfall(mm)
+
+-   MaxRain: Minimum rainfall(mm)
+
+```{r, echo = TRUE, results=TRUE}
+head(spt_rainfall_th, n=1)
+```
+
+# 3. Prepare data of spatial rainfall for all province of Thailand in December, 2025
+
+## 3.1 Filter only interested period, December, 2025.
+
+Filter spatial rainfall data of all province in Thailand using only data of December, 2025.
+
+In this example, we will use spatial rainfall data on December, 2025 for all provinces in Thailand. We use R library "dplyr" to help filter data.
+
+```{r, echo = TRUE, results=TRUE}
+library(dplyr)
+```
+
+## 
+
+```{r, echo = TRUE, results=TRUE}
+## Filter Thailand rainfall of each province in Thailand only in 2025
+spt_rainfall_2025 <- spt_rainfall_th %>%
+                          filter(spt_rainfall_th$YEAR==2025)
+
+## Filter Thailand rainfall of each province in Thailand 
+#only in December, 2025
+spt_rainfall_2025_12 <- spt_rainfall_2025 %>%
+                            filter(spt_rainfall_2025$MONTH==12)
+```
+
+## 3.2 Sorting data using column Average Rainfall(AvgRain)
+
+For ploting the graph, we want to see data of Average Rainfall sorting from province which has maximum average rainfall down to province which
+has minimum average rainfall, then we will sort our data using data of Average rain(AvgRain).
+
+```{r, echo=TRUE}
+spt_rainfall_2025_12 <- spt_rainfall_2025_12 %>%
+                            arrange(desc(AvgRain))
+spt_rainfall_2025_12$PROV_T <-  factor(
+                      spt_rainfall_2025_12$PROV_T,
+                          levels = spt_rainfall_2025_12$PROV_T)
+head(spt_rainfall_2025_12, n=3)
+```
+
+# 4. Plot data using scatter plot for all province of Thailand in December, 2025
+##  
+In this section, we plot data of Average Rainfall, Minimum Rainfall and Maximum rainfall of
+each province in Thailand on December, 2025, using plotly
+
+## 4.1 For visualization graph, we use R library "plotly".
+
+```{R, echo=TRUE, results=FALSE}
+library(plotly)
+```
+
+## 4.2 Average rainfall, Minimum rainfall, Maximum rainfall as data for each line graph
+
+There is 3 columns of data which we use in this plot:-
+
+-   Average Rainfall(AvgRain), mm.
+-   Minimum Rainfall(Minimum Rainfall) mm.
+-   Maximum Rainfall(Maximum Rainfall) mm.
+
+## 4.3 Using scatter plot(lines and marker)
+
+We visualize plotly graph using scatter plot(lines and markers).
+
+```{R, echo=TRUE, results=FALSE}
+fig1 <- plot_ly(spt_rainfall_2025_12,
+                x = ~PROV_T,
+                y = ~AvgRain,
+                type = "scatter",
+                mode="markers+lines",
+                name="Average Rainfall (mm.)") %>%
+          add_trace(y=~MinRain,
+                    name="Minimum Rainfall(mm.)",
+                    mode="markers+lines" ) %>%
+          add_trace(y=~MaxRain,
+                    name="Maximum Rainfall(mm.)",
+                    mode="markers+lines" )  %>%
+          layout(title = "Spatial rainfall from each province in Thailand (December 2025)",
+                 xaxis = list(title = "Province Name(in THAI)"),
+                 yaxis = list (title = "Rainfall (mm)") )
+```
+
+## 4.4 Visualize graph
+
+```{R, echo=TRUE, results=TRUE}
+fig1
+```
+
+# 5. Prepare data of spatial rainfall for Phuket province in Thailand in year 2025.
+
+##   
+In this section, We will prepare data of spatial rainfall for Phuket province of Thailand in year 2025.
+
+## 5.1 Filter data for only Phuket("ภูเก็ต" in Thai) province.
+
+```{r, echo = TRUE}
+## Thailand rainfall of each province in Thailand(2025)
+spt_rainfall_phuket_2025 <- spt_rainfall_2025 %>%
+                               filter(spt_rainfall_2025$PROV_T=="ภูเก็ต")
+```
+
+## 5.2 Sorting data from the first month to last month of the year.
+
+```{r, echo=TRUE}
+spt_rainfall_phuket_2025 <- spt_rainfall_phuket_2025 %>%
+                              arrange(MONTH)
+
+head(spt_rainfall_phuket_2025, n=6)
+```
+
+# 6. Plot data using scatter plot for Phuket province in Thailand in year 2025.
+## 6.1 Create ploting data using R library "plotly" to visualize data
+spatial rainfall of Phuket province of Thailand in year 2025.
+```{R, echo=TRUE, results=FALSE}
+fig2 <- plot_ly(spt_rainfall_phuket_2025,
+                x = ~MONTH,
+                y = ~AvgRain,
+                type = "scatter",
+                mode="markers+lines",
+                name="Average Rainfall(mm.)") %>%
+  layout(title = "Spatial rainfall of Phuket, Thailand (all month in 2025)",
+                 xaxis = list(title = "Month"),
+                 yaxis = list (title = "Rainfall (mm)") ) %>%
+          add_trace(y=~MinRain,
+                    name="Minimum Rainfall(mm.)",
+                    mode="markers+lines" ) %>%
+          add_trace(y=~MaxRain,
+                    name="Maximum Rainfall(mm.)",
+                    mode="markers+lines" ) 
+```
+
+## 6.2 Visualization plot
+
+```{R, echo=TRUE, results=TRUE}
+fig2
+```
+
+# 7. Plot spatial rainfall data of all provinces Thailand December, 2025 and visualize in choropleth map.
+
+##  
+In this section, we use choropleth map of library plotly to visualize data as map to show
+amount of Average rainfall(AvgRain) for all provinces in Thailand 
+
+## 7.1 Using R library "rjson" to read GeoJSON data.
+
+```{R, echo=TRUE, results=FALSE}
+library(rjson)
+```
+
+## 7.2 Read GeoJSON data into memory.
+
+```{R, echo=TRUE, results=FALSE}
+url <- "simplified_provinces_geojson.geojson"
+geojson <- rjson::fromJSON(file=url)
+```
+
+## 7.3 Configure the appearance of the choropleth map
+
+```{R, echo=TRUE}
+g <- list(
+  fitbounds = "locations",
+  visible = TRUE
+)
+```
+
+## 7.4 Create choropleth map
+```{R, echo=TRUE, results=FALSE}
+fig_avg_rain <- plot_ly()  %>% 
+                  add_trace(
+                    type="choropleth",
+                    geojson=geojson,
+                    locations=spt_rainfall_2025_12$PROV_T,
+                    z=spt_rainfall_2025_12$AvgRain,
+                    colorscale="Viridis",
+                    featureidkey="properties.ADM1_TH" ) %>% 
+                  layout( geo = g ) %>% 
+                  colorbar(title = "Average Rainfall (mm)" ) %>% 
+                  layout(
+                    title = "Amount of Average Rainfall(AvgRain) of provinces in Thailand in December, 2025" )
+```
+
+## 7.5 Visualize the choropleth map
+Visualization describe spatial rainfal(average rain, AvgRain) of all province in Thailand in December, 2025
+```{R, echo=FALSE, results=TRUE}
+fig_avg_rain
+```
